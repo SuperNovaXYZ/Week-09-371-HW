@@ -1,6 +1,8 @@
 package edu.farmingdale.datastoredemo.ui
 
 import android.widget.Toast
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -28,8 +30,13 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -41,7 +48,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import edu.farmingdale.datastoredemo.R
-
 import edu.farmingdale.datastoredemo.data.local.LocalEmojiData
 
 /*
@@ -63,13 +69,19 @@ fun EmojiReleaseApp(
 @Composable
 private fun EmojiScreen(
     uiState: EmojiReleaseUiState,
-    selectLayout: (Boolean) -> Unit
+    selectLayout: (Boolean) -> Unit,
 ) {
+    var isDarkTheme by remember { mutableStateOf(false) } // variable for Dark Mode state
     val isLinearLayout = uiState.isLinearLayout
+
+    // Define colors based on the theme state
+    val backgroundColor = if (isDarkTheme) Color.Black else Color.White
+    val textColor = if (isDarkTheme) Color.White else Color.Black
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.top_bar_name)) },
+                title = { Text(stringResource(R.string.top_bar_name), color = textColor) },
                 actions = {
                     IconButton(
                         onClick = {
@@ -82,8 +94,15 @@ private fun EmojiScreen(
                             tint = MaterialTheme.colorScheme.onBackground
                         )
                     }
-
-
+                    // Switch for toggling between light and dark
+                    Switch(
+                        checked = isDarkTheme,
+                        onCheckedChange = { isDarkTheme = it },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = MaterialTheme.colorScheme.primary,
+                            uncheckedThumbColor = MaterialTheme.colorScheme.onBackground
+                        )
+                    )
                 },
                 colors = TopAppBarDefaults.largeTopAppBarColors(
                     containerColor = MaterialTheme.colorScheme.inversePrimary
@@ -97,15 +116,19 @@ private fun EmojiScreen(
                 start = dimensionResource(R.dimen.padding_medium),
                 end = dimensionResource(R.dimen.padding_medium),
             )
+            .background(backgroundColor) // Set the background color based on theme
+
         if (isLinearLayout) {
             EmojiReleaseLinearLayout(
                 modifier = modifier.fillMaxWidth(),
-                contentPadding = innerPadding
+                contentPadding = innerPadding,
+                textColor = textColor // Pass text color for the emojis
             )
         } else {
             EmojiReleaseGridLayout(
                 modifier = modifier,
                 contentPadding = innerPadding,
+                textColor = textColor // Pass text color for the emojis
             )
         }
     }
@@ -114,9 +137,10 @@ private fun EmojiScreen(
 @Composable
 fun EmojiReleaseLinearLayout(
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(0.dp)
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    textColor: Color // New parameter for text color
 ) {
-    val cntxt = LocalContext.current
+    val context = LocalContext.current
     LazyColumn(
         modifier = modifier,
         contentPadding = contentPadding,
@@ -125,32 +149,56 @@ fun EmojiReleaseLinearLayout(
         items(
             items = LocalEmojiData.EmojiList,
             key = { e -> e }
-        ) { e ->
+        ) { emoji ->
             Card(
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.primary
                 ),
-                shape = MaterialTheme.shapes.medium
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier
+                    .clickable {
+                        // Show a toast message with the emoji name
+                        Toast.makeText(context, getEmojiName(emoji), Toast.LENGTH_SHORT).show()
+                    }
             ) {
-                    Text(
-                        text = e, fontSize = 50.sp,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(dimensionResource(R.dimen.padding_medium)),
-                        textAlign = TextAlign.Center
-                    )
-
-
+                Text(
+                    text = emoji,
+                    fontSize = 50.sp,
+                    color = textColor, // Set the text color based on theme
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(dimensionResource(R.dimen.padding_medium)),
+                    textAlign = TextAlign.Center
+                )
             }
         }
+    }
+}
+
+// Function to return emoji name based on the emoji's character
+private fun getEmojiName(emoji: String): String {
+    return when (emoji) {
+        "😀" -> "Grinning Face"
+        "😃" -> "Grinning Face with Eyes"
+        "😄" -> "Grinning Face with Smiling Eyes"
+        "😁" -> "Face with Smiling Eyes"
+        "😆" -> "Grinning Squinting Face"
+        "😅" -> "Grinning Face with Sweat"
+        "😂" -> "Face with Tears of Joy"
+        "🤣" -> "Rolling on the Floor Laughing"
+        "😊" -> "Smiling Face with Smiling Eyes"
+        "😇" -> "Smiling Face with Halo"
+        else -> "Unknown Emoji"
     }
 }
 
 @Composable
 fun EmojiReleaseGridLayout(
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(0.dp)
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    textColor: Color // New parameter for text color
 ) {
+    val context = LocalContext.current
     LazyVerticalGrid(
         modifier = modifier,
         columns = GridCells.Fixed(3),
@@ -161,16 +209,23 @@ fun EmojiReleaseGridLayout(
         items(
             items = LocalEmojiData.EmojiList,
             key = { e -> e }
-        ) { e ->
+        ) { emoji ->
             Card(
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.primary
                 ),
-                modifier = Modifier.height(110.dp),
+                modifier = Modifier
+                    .height(110.dp)
+                    .clickable {
+                        // Show a toast message with the emoji name
+                        Toast.makeText(context, getEmojiName(emoji), Toast.LENGTH_SHORT).show()
+                    },
                 shape = MaterialTheme.shapes.medium
             ) {
                 Text(
-                    text = e, fontSize = 50.sp,
+                    text = emoji,
+                    fontSize = 50.sp,
+                    color = textColor, // Set the text color based on theme
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier

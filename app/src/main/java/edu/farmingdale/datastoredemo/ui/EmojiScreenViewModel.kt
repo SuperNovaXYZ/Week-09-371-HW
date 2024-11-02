@@ -1,5 +1,6 @@
 package edu.farmingdale.datastoredemo.ui
 
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -19,6 +20,9 @@ import kotlinx.coroutines.launch
 class EmojiScreenViewModel(
     private val userPreferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
+
+
+
     // UI states access for various
     val uiState: StateFlow<EmojiReleaseUiState> =
         userPreferencesRepository.isLinearLayout.map { isLinearLayout ->

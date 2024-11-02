@@ -18,6 +18,8 @@ import java.io.IOException
 class UserPreferencesRepository(
     private val dataStore: DataStore<Preferences>
 ) {
+
+
     private companion object {
         val IS_LINEAR_LAYOUT = booleanPreferencesKey("is_linear_layout")
         val IS_DARK_THEME = booleanPreferencesKey("is_dark_theme")
